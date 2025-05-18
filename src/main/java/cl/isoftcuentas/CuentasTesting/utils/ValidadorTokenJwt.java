@@ -11,7 +11,6 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
@@ -20,10 +19,9 @@ import java.util.List;
 import java.util.Optional;
 
 @AllArgsConstructor
-@Component
-public class JwtTokenValidator extends OncePerRequestFilter {
+public class ValidadorTokenJwt extends OncePerRequestFilter {
 
-    public final JwtUtils jwtUtils;
+    public final JwtUtilidad jwtUtilidad;
 
     @Override
     protected void doFilterInternal
@@ -31,13 +29,13 @@ public class JwtTokenValidator extends OncePerRequestFilter {
              @NonNull HttpServletResponse response,
              @NonNull FilterChain filterChain) throws ServletException, IOException {
 
-        String token = jwtUtils.getTokenFromCookie(request);
+        String token = jwtUtilidad.getTokenFromCookie(request);
 
         try {
-            Optional<DecodedJWT> decodedJWT = jwtUtils.validateToken(token);
+            Optional<DecodedJWT> decodedJWT = jwtUtilidad.validateToken(token);
             if (decodedJWT.isPresent()) {
-                String username = jwtUtils.getUsernameFromToken(token);
-                List<String> roles = jwtUtils.getRolesFromToken(token);
+                String username = jwtUtilidad.getUsernameFromToken(token);
+                List<String> roles = jwtUtilidad.getRolesFromToken(token);
 
                 Collection<? extends GrantedAuthority> authorities = roles.stream()
                         .map(SimpleGrantedAuthority::new)

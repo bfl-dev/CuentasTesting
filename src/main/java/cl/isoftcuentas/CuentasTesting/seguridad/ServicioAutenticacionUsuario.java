@@ -1,11 +1,12 @@
 package cl.isoftcuentas.CuentasTesting.seguridad;
 
 import cl.isoftcuentas.CuentasTesting.dtos.SolicitudAutenticacionDTO;
+import cl.isoftcuentas.CuentasTesting.dtos.SolicitudRegistroDTO;
 import cl.isoftcuentas.CuentasTesting.modelos.Cliente;
 import cl.isoftcuentas.CuentasTesting.modelos.Personal;
 import cl.isoftcuentas.CuentasTesting.repositorios.RepositorioCliente;
 import cl.isoftcuentas.CuentasTesting.repositorios.RepositorioPersonal;
-import cl.isoftcuentas.CuentasTesting.utils.JwtUtils;
+import cl.isoftcuentas.CuentasTesting.utils.JwtUtilidad;
 import jakarta.persistence.EntityManager;
 import jakarta.transaction.Transactional;
 import lombok.AllArgsConstructor;
@@ -20,19 +21,21 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.sql.Date;
+import java.time.LocalDate;
 import java.util.Optional;
 
 
 @Transactional
 @AllArgsConstructor
 @Service
-public class ServicioAutenticacionUsuario implements UserDetailsService { //Integracion chupame el pico
+public class ServicioAutenticacionUsuario implements UserDetailsService { //Integracion chupadme el pico
 
     private final RepositorioCliente repositorioCliente;
     private final RepositorioPersonal repositorioPersonal;
     private final EntityManager entityManager;
     private final PasswordEncoder passwordEncoder;
-    private final JwtUtils jwtUtils;
+    private final JwtUtilidad jwtUtilidad;
 
 
     public Optional<String> iniciarSesionUsuario(SolicitudAutenticacionDTO solicitudAutenticacion) {
@@ -44,10 +47,31 @@ public class ServicioAutenticacionUsuario implements UserDetailsService { //Inte
 
         if (autenticacion.isAuthenticated()) {
             SecurityContextHolder.getContext().setAuthentication(autenticacion);
-            return Optional.of(jwtUtils.createToken(autenticacion));
+            return Optional.of(jwtUtilidad.createToken(autenticacion));
         } else {
             return Optional.empty();
         }
+    }
+
+    public boolean registrar(SolicitudRegistroDTO solicitudRegistro) {
+
+        String rut = solicitudRegistro.rut();
+
+        if (repositorioCliente.existsByRut(rut)) return false;
+
+        Cliente nuevoCliente = Cliente.builder()
+                .nombre(solicitudRegistro.nombre())
+                .email(solicitudRegistro.email())
+                .esSocio(false)
+                .fechaCreacion(Date.valueOf(LocalDate.now()))
+                .contrasenia(passwordEncoder.encode(solicitudRegistro.contrasenia()))
+                .rut(solicitudRegistro.rut())
+                .nombre(solicitudRegistro.nombre()).build();
+
+
+        repositorioCliente.save(nuevoCliente);
+
+        return true;
     }
 
 
@@ -108,26 +132,37 @@ public class ServicioAutenticacionUsuario implements UserDetailsService { //Inte
             throw new BadCredentialsException("Rut no puede ser nulo o vacío");
         }
 
-        if (repositorioPersonal.existsByRut(rut)) {
-            Optional<Personal> personal = repositorioPersonal.findByRut(rut);
-            if (personal.isPresent()) {
-                return new DetallesUsuario(personal.get().getId()
-                        , personal.get().getNombre()
-                        , personal.get().getRol().toString()
-                        , personal.get().getSucursal().getId());
-            }
-        }
+        Optional<DetallesUsuario> detallesUsuario = Optional.empty();
 
         if (repositorioCliente.existsByRut(rut)) {
-            Optional<Cliente> cliente = repositorioCliente.findByRut(rut);
-            if (cliente.isPresent()) {
-                return new DetallesUsuario(cliente.get().getId()
-                        , cliente.get().getNombre()
-                        , "CLIENTE"
-                        , 0);
-            }
+            detallesUsuario = Optional.of(conseguirDetallesCliente(rut));
         }
 
+        if (repositorioPersonal.existsByRut(rut)) {
+            detallesUsuario = Optional.of(conseguirDetallesPersonal(rut));
+        }
+
+
+        if (detallesUsuario.isPresent()) return detallesUsuario.get();
+
         throw new BadCredentialsException("Usuario no encontrado");
+    }
+
+    private DetallesUsuario conseguirDetallesPersonal(String rut) {
+        Optional<Personal> personal = repositorioPersonal.findByRut(rut);
+        return personal.map(value -> new DetallesUsuario(value.getId()
+                , value.getNombre()
+                , value.getRol().toString()
+                , value.getSucursal().getId())
+        ).orElse(null);
+    }
+
+    private DetallesUsuario conseguirDetallesCliente(String rut) {
+        Optional<Cliente> cliente = repositorioCliente.findByRut(rut);
+        return cliente.map(value -> new DetallesUsuario(value.getId()
+                , value.getNombre()
+                , "CLIENTE"
+                , 0)
+        ).orElse(null);
     }
 }

@@ -18,7 +18,7 @@ import java.util.stream.Collectors;
 
 @Slf4j
 @Component
-public class JwtUtils {
+public class JwtUtilidad {
     @Value("${security.jwt.secret}")
     private String privateKey;
 
