@@ -26,7 +26,7 @@ public class Personal {
     private boolean activado;
     private String nombre;
     private String email;
-    private String contraseña;
+    private String contrasenia;
     private String rut;
     @Column(name = "fecha_creacion")
     private Date fechaCreacion;
