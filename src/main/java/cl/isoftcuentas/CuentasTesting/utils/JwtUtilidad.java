@@ -13,6 +13,8 @@ import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.stereotype.Component;
 
+import java.time.Duration;
+import java.time.Instant;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -94,6 +96,34 @@ public class JwtUtilidad {
                 .map(Cookie::getValue)
                 .findFirst()
                 .orElse(null);
+    }
+
+    public String generarTokenRecuperarContrasenia(String email) {
+        return JWT.create()
+                .withIssuer(this.userGenerator)
+                .withSubject(email)
+                .withClaim("tipo", "recuperar_contrasenia")
+                .withIssuedAt(new Date())
+                .withExpiresAt(Date.from(Instant.now().plus(Duration.ofMinutes(15))))
+                .sign(Algorithm.HMAC256(this.privateKey));
+    }
+
+    public String validarTokenRecuperarContrasenia(String token) {
+        try {
+            DecodedJWT decodedJWT = JWT.require(Algorithm.HMAC256(this.privateKey))
+                    .withIssuer(this.userGenerator)
+                    .build()
+                    .verify(token);
+            if (decodedJWT.getClaim("tipo").asString().equals("recuperar_contrasenia")) {
+                return decodedJWT.getSubject();
+            } else {
+                log.warn("Token no es de recuperación de contraseña");
+                return null;
+            }
+        } catch (Exception e) {
+            log.error("Error al validar el token: {}", e.getMessage());
+            return null;
+        }
     }
 
 }

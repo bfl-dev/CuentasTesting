@@ -3,11 +3,15 @@ package cl.isoftcuentas.CuentasTesting.controladores;
 import cl.isoftcuentas.CuentasTesting.dtos.RespuestaGenericaDTO;
 import cl.isoftcuentas.CuentasTesting.dtos.SolicitudAutenticacionDTO;
 import cl.isoftcuentas.CuentasTesting.dtos.SolicitudRegistroDTO;
+import cl.isoftcuentas.CuentasTesting.dtos.SolicitudRecuperarContraseniaDTO;
+import cl.isoftcuentas.CuentasTesting.dtos.SolicitudCambioContraseniaDTO;
 import cl.isoftcuentas.CuentasTesting.seguridad.DetallesUsuario;
 import cl.isoftcuentas.CuentasTesting.seguridad.ServicioAutenticacionUsuario;
+import cl.isoftcuentas.CuentasTesting.servicios.ServicioRecuperarContrasenia;
 import cl.isoftcuentas.CuentasTesting.utils.MaestroGalleta;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.AllArgsConstructor;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
@@ -18,12 +22,13 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.util.Optional;
 
-@AllArgsConstructor
+@RequiredArgsConstructor
 @RestController
 @RequestMapping("/api")
 public class ControladorAutenticacion {
 
     private final ServicioAutenticacionUsuario servicioAutenticacionUsuario;
+    private final ServicioRecuperarContrasenia servicioRecuperarContrasenia;
 
     // Aquí puedes implementar los métodos para manejar la autenticación
     // Por ejemplo, un método para iniciar sesión, cerrar sesión, etc.
@@ -67,6 +72,18 @@ public class ControladorAutenticacion {
         return ResponseEntity.ok(new RespuestaGenericaDTO<DetallesUsuario>(true
                 ,servicioAutenticacionUsuario.conseguirDetallesUsuario(authentication.getName()))
         );
+    }
+
+    @PostMapping("/autenticacion/recuperar-contrasenia")
+    public ResponseEntity<RespuestaGenericaDTO<String>> recuperarContrasenia(@RequestBody SolicitudRecuperarContraseniaDTO solicitudRecuperarContraseniaDTO) {
+        servicioRecuperarContrasenia.enviarEmailRecuperacionContrasenia(solicitudRecuperarContraseniaDTO.email());
+        return ResponseEntity.ok(new RespuestaGenericaDTO<>(true, "se envio email de recuperacion"));
+    }
+
+    @PostMapping("/autenticacion/cambiar-contrasenia")
+    public ResponseEntity<RespuestaGenericaDTO<String>> cambiarContrasenia(@RequestBody SolicitudCambioContraseniaDTO solicitudCambioContraseniaDTO) {
+        servicioRecuperarContrasenia.cambiarContrasenia(solicitudCambioContraseniaDTO.token(), solicitudCambioContraseniaDTO.nuevaContrasenia());
+        return ResponseEntity.ok(new RespuestaGenericaDTO<>(true, "se cambio la contrasenia"));
     }
 
 }
