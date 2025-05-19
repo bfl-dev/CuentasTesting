@@ -1,6 +1,10 @@
 package cl.isoftcuentas.CuentasTesting.controladores;
 
-import cl.isoftcuentas.CuentasTesting.dtos.*;
+import cl.isoftcuentas.CuentasTesting.dtos.RespuestaGenericaDTO;
+import cl.isoftcuentas.CuentasTesting.dtos.SolicitudAutenticacionDTO;
+import cl.isoftcuentas.CuentasTesting.dtos.SolicitudRegistroDTO;
+import cl.isoftcuentas.CuentasTesting.dtos.SolicitudRecuperarContraseniaDTO;
+import cl.isoftcuentas.CuentasTesting.dtos.SolicitudCambioContraseniaDTO;
 import cl.isoftcuentas.CuentasTesting.seguridad.DetallesUsuario;
 import cl.isoftcuentas.CuentasTesting.seguridad.ServicioAutenticacionUsuario;
 import cl.isoftcuentas.CuentasTesting.servicios.ServicioRecuperarContrasenia;
