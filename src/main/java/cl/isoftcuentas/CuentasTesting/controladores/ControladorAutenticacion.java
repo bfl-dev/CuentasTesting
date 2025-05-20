@@ -10,11 +10,10 @@ import cl.isoftcuentas.CuentasTesting.seguridad.ServicioAutenticacionUsuario;
 import cl.isoftcuentas.CuentasTesting.servicios.ServicioRecuperarContrasenia;
 import cl.isoftcuentas.CuentasTesting.utils.MaestroGalleta;
 import jakarta.servlet.http.HttpServletResponse;
-import lombok.AllArgsConstructor;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.Authentication;
+
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -67,12 +66,7 @@ public class ControladorAutenticacion {
                 ResponseEntity.badRequest().body(new RespuestaGenericaDTO<>(false, "no se pudo crear cuenta"));
     }
 
-    @PostMapping("/cuentas/quiensoy")
-    public ResponseEntity<RespuestaGenericaDTO<DetallesUsuario>> quiensoy(Authentication authentication) {
-        return ResponseEntity.ok(new RespuestaGenericaDTO<DetallesUsuario>(true
-                ,servicioAutenticacionUsuario.conseguirDetallesUsuario(authentication.getName()))
-        );
-    }
+
 
     @PostMapping("/autenticacion/recuperar-contrasenia")
     public ResponseEntity<RespuestaGenericaDTO<String>> recuperarContrasenia(@RequestBody SolicitudRecuperarContraseniaDTO solicitudRecuperarContraseniaDTO) {
