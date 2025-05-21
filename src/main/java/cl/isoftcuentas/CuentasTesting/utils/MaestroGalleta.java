@@ -7,6 +7,8 @@ import org.springframework.stereotype.Component;
 @Component
 public class MaestroGalleta {
 
+    private MaestroGalleta() {}
+
     public static void crearCookie(HttpServletResponse httpServletResponse, String name, String value, boolean secure, Integer maxAge, String domain) {
         Cookie cookie = new Cookie(name, value);
         cookie.setSecure(secure);

@@ -11,9 +11,6 @@ import jakarta.persistence.EntityManager;
 import jakarta.transaction.Transactional;
 import lombok.AllArgsConstructor;
 import org.springframework.security.authentication.BadCredentialsException;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
@@ -38,19 +35,18 @@ public class ServicioAutenticacionUsuario implements UserDetailsService { //Inte
     private final JwtUtilidad jwtUtilidad;
 
 
-    public Optional<String> iniciarSesionUsuario(SolicitudAutenticacionDTO solicitudAutenticacion) {
-
+    public String iniciarSesionUsuario(SolicitudAutenticacionDTO solicitudAutenticacion) {
         String rut = solicitudAutenticacion.rut();
         String contrasenia = solicitudAutenticacion.contrasenia();
 
-        Authentication autenticacion = autenticar(rut, contrasenia);
+        autenticar(rut, contrasenia);
+        UserDetails userDetails = loadUserByUsername(rut);
+        String rol = userDetails.getAuthorities().stream()
+                .findFirst()
+                .map(Object::toString)
+                .orElse("CLIENTE");
 
-        if (autenticacion.isAuthenticated()) {
-            SecurityContextHolder.getContext().setAuthentication(autenticacion);
-            return Optional.of(jwtUtilidad.createToken(autenticacion));
-        } else {
-            return Optional.empty();
-        }
+        return jwtUtilidad.createToken(userDetails.getUsername(), rol);
     }
 
     public boolean registrar(SolicitudRegistroDTO solicitudRegistro) {
@@ -78,7 +74,6 @@ public class ServicioAutenticacionUsuario implements UserDetailsService { //Inte
 
     @Override
     public UserDetails loadUserByUsername(String rut) throws UsernameNotFoundException {
-
         if (repositorioPersonal.existsByRut(rut)){
             Optional<Personal> personal = repositorioPersonal.findByRut(rut);
             if (personal.isPresent()) {
@@ -115,14 +110,11 @@ public class ServicioAutenticacionUsuario implements UserDetailsService { //Inte
 
 
 
-    private Authentication autenticar(String rut, String contrasenia) {
-
-        Optional<UserDetails> userDetails = Optional.ofNullable(loadUserByUsername(rut));
-
-        if ( userDetails.isEmpty() || !passwordEncoder.matches(contrasenia, userDetails.get().getPassword())) {
+    private void autenticar(String rut, String contrasenia) {
+        UserDetails userDetails = loadUserByUsername(rut);
+        if (!passwordEncoder.matches(contrasenia, userDetails.getPassword())) {
             throw new BadCredentialsException("Credenciales inválidas");
         }
-        return new UsernamePasswordAuthenticationToken(userDetails.get().getUsername(), null, userDetails.get().getAuthorities());
     }
 
 

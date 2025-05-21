@@ -8,15 +8,11 @@ import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.GrantedAuthority;
-import org.springframework.security.core.userdetails.User;
 import org.springframework.stereotype.Component;
 
 import java.time.Duration;
 import java.time.Instant;
 import java.util.*;
-import java.util.stream.Collectors;
 
 @Slf4j
 @Component
@@ -30,18 +26,7 @@ public class JwtUtilidad {
     @Value("${security.jwt.expiration-minutes}") // Expiración por defecto: 10 minutos
     private int expirationMinutes;
 
-    public String createToken(Authentication authentication) {
-        String username = authentication.getPrincipal().toString();
-
-        if (authentication.getPrincipal() instanceof User){
-            username = ((User) authentication.getPrincipal()).getUsername();
-        }
-
-        List<String> authorities = authentication.getAuthorities()
-                .stream()
-                .map(GrantedAuthority::getAuthority)
-                .collect(Collectors.toList());
-
+    public String createToken(String rut, String rol) {
         Date issuedDate = new Date();
         Date expirationDate = new Date(System.currentTimeMillis() + expirationMinutes * 60 * 1000L);
 
@@ -49,8 +34,8 @@ public class JwtUtilidad {
 
         return JWT.create()
                 .withIssuer(this.userGenerator)
-                .withSubject(username)
-                .withClaim("authorities", authorities) // Guardar roles como array
+                .withSubject(rut)
+                .withClaim("authorities", rol) // Guardar roles como array
                 .withIssuedAt(issuedDate)
                 .withExpiresAt(expirationDate)
                 .withJWTId(UUID.randomUUID().toString())
@@ -78,9 +63,9 @@ public class JwtUtilidad {
         DecodedJWT decodedJWT = JWT.decode(token);
         return decodedJWT.getSubject();
     }
-    public List<String> getRolesFromToken(String token) {
+    public String getRolesFromToken(String token) {
         DecodedJWT decodedJWT = JWT.decode(token);
-        return decodedJWT.getClaim("authorities").asList(String.class);
+        return decodedJWT.getClaim("authorities").asString();
     }
     public String getIssuerFromToken(String token) {
         DecodedJWT decodedJWT = JWT.decode(token);

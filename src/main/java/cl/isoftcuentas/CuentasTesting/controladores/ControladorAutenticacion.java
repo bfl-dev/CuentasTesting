@@ -36,16 +36,11 @@ public class ControladorAutenticacion {
     @PostMapping
     @RequestMapping("/autenticacion/iniciar-sesion")
     public ResponseEntity<RespuestaGenericaDTO<DetallesUsuario>> inicioSesion(@RequestBody SolicitudAutenticacionDTO solicitudAutenticacion, HttpServletResponse response) {
-
-        Optional<String> token = servicioAutenticacionUsuario.iniciarSesionUsuario(solicitudAutenticacion);
-
-        if (token.isPresent()) {
-            MaestroGalleta.crearCookie(response, "AuthToken", token.get(), true, 3600, "localhost");
-            return ResponseEntity.ok(
-                    new RespuestaGenericaDTO<>(true, servicioAutenticacionUsuario.conseguirDetallesUsuario(solicitudAutenticacion.rut()))
-            );
-        }
-        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        String token = servicioAutenticacionUsuario.iniciarSesionUsuario(solicitudAutenticacion);
+        MaestroGalleta.crearCookie(response, "AuthToken", token, true, 3600, "localhost");
+        return ResponseEntity.ok(
+                new RespuestaGenericaDTO<>(true, servicioAutenticacionUsuario.conseguirDetallesUsuario(solicitudAutenticacion.rut()))
+        );
     }
 
     @PostMapping("/autenticacion/cerrar-sesion")
@@ -65,8 +60,6 @@ public class ControladorAutenticacion {
                 :
                 ResponseEntity.badRequest().body(new RespuestaGenericaDTO<>(false, "no se pudo crear cuenta"));
     }
-
-
 
     @PostMapping("/autenticacion/recuperar-contrasenia")
     public ResponseEntity<RespuestaGenericaDTO<String>> recuperarContrasenia(@RequestBody SolicitudRecuperarContraseniaDTO solicitudRecuperarContraseniaDTO) {

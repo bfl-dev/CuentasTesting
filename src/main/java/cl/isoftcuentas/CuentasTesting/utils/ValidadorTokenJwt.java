@@ -35,22 +35,17 @@ public class ValidadorTokenJwt extends OncePerRequestFilter {
             Optional<DecodedJWT> decodedJWT = jwtUtilidad.validateToken(token);
             if (decodedJWT.isPresent()) {
                 String username = jwtUtilidad.getUsernameFromToken(token);
-                List<String> roles = jwtUtilidad.getRolesFromToken(token);
+                String roles = jwtUtilidad.getRolesFromToken(token);
 
-                Collection<? extends GrantedAuthority> authorities = roles.stream()
-                        .map(SimpleGrantedAuthority::new)
-                        .toList();
 
+                Collection<? extends GrantedAuthority> authorities = List.of(new SimpleGrantedAuthority(roles));
                 SecurityContextHolder.getContext().setAuthentication(new UsernamePasswordAuthenticationToken(username, null, authorities));
+                logger.info("Token validated successfully for user: " + username);
             } else {
                 logger.warn("Token validation failed");
-                response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-                return;
             }
         } catch (Exception e) {
-            logger.error("Error during token validation: {}");
-            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-            return;
+            logger.error("Error during token validation:");
         }
 
         filterChain.doFilter(request, response);
